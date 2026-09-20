@@ -1,0 +1,33 @@
+{
+  "name": "RoboFieldKit — ロボット現場ツールキット",
+  "short_name": "RoboFieldKit",
+  "description": "差動二輪オドメトリ、クォータニオン・オイラー変換、車輪速度、CAN フレーム変換、バッテリー稼働時間推定。完全オフライン対応のポケットツールキット。",
+  "lang": "ja",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b1120",
+  "theme_color": "#0b1120",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

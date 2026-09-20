@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1120" />
+  <meta name="description" content="RoboFieldKit — ロボット現場作業のためのポケットツールキット。完全オフライン対応。" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="RoboFieldKit" />
+  <title>RoboFieldKit — ロボット現場ツールキット</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">⚙</span>
+      <div>
+        <h1>RoboFieldKit</h1>
+        <p class="tagline">ロボット現場ツールキット · オフライン対応</p>
+      </div>
+    </div>
+    <span id="installHint" class="install-hint hidden">📲 インストール可能</span>
+  </header>
+
+  <main class="cards">
+
+    <!-- 1. 差動二輪オドメトリ -->
+    <section class="card" id="card-odom">
+      <h2>差動二輪オドメトリ計算器</h2>
+      <p class="desc">車輪半径・車軸幅・エンコーダ値から移動量と姿勢を推定します。</p>
+      <div class="grid">
+        <label>車輪半径 r [m]<input id="odom-r" type="number" inputmode="decimal" step="any" value="0.05" /></label>
+        <label>車軸幅 L [m]<input id="odom-l" type="number" inputmode="decimal" step="any" value="0.30" /></label>
+        <label>左エンコーダ [カウント]<input id="odom-nl" type="number" inputmode="decimal" step="any" value="100" /></label>
+        <label>右エンコーダ [カウント]<input id="odom-nr" type="number" inputmode="decimal" step="any" value="100" /></label>
+        <label>1回転あたりパルス [ticks/rev]<input id="odom-tpr" type="number" inputmode="decimal" step="any" value="100" /></label>
+      </div>
+      <div class="results" id="odom-results"></div>
+      <p class="error hidden" id="odom-error"></p>
+    </section>
+
+    <!-- メカナム／オムニ／差動 逆運動学 -->
+    <section class="card" id="card-kinematics">
+      <h2>メカナム／オムニ／差動 逆運動学</h2>
+      <p class="desc">目標速度 (vx, vy, ω) から各車輪の目標速度を算出します。途中式つき。</p>
+
+      <div class="tabs" id="kin-tabs">
+        <button class="tab active" data-kin="mecanum">メカナム4</button>
+        <button class="tab" data-kin="omni">オムニ4</button>
+        <button class="tab" data-kin="diff">差動2</button>
+      </div>
+
+      <div class="grid">
+        <label>vx 前進 [m/s]<input id="kin-vx" type="number" inputmode="decimal" step="any" value="1" /></label>
+        <label>vy 横 (左 +) [m/s]<input id="kin-vy" type="number" inputmode="decimal" step="any" value="0" /></label>
+        <label>ω 旋回 [rad/s] (反時計 +)<input id="kin-w" type="number" inputmode="decimal" step="any" value="0" /></label>
+        <label>車輪半径 r [m]<input id="kin-r" type="number" inputmode="decimal" step="any" value="0.05" /></label>
+        <label>前後半長 Lx [m]<input id="kin-lx" type="number" inputmode="decimal" step="any" value="0.10" /></label>
+        <label>左右半幅 Ly [m]<input id="kin-ly" type="number" inputmode="decimal" step="any" value="0.15" /></label>
+      </div>
+
+      <div class="preset-row">
+        <button class="chip" data-preset="forward">▶ 前進</button>
+        <button class="chip" data-preset="strafe">▶ 横移動</button>
+        <button class="chip" data-preset="rotate">▶ 旋回</button>
+      </div>
+
+      <div class="unit-toggle" id="kin-unit">
+        <span class="unit-label">単位</span>
+        <button class="chip active" data-unit="ms">m/s</button>
+        <button class="chip" data-unit="rads">rad/s</button>
+        <button class="chip" data-unit="rpm">RPM</button>
+      </div>
+
+      <div class="results" id="kin-results"></div>
+      <p class="error hidden" id="kin-error"></p>
+    </section>
+
+    <!-- モーター配置 → 信号・コード生成 -->
+    <section class="card" id="card-motor">
+      <h2>モーター配置 → 信号・コード生成</h2>
+      <p class="desc">ロボットタイプとモーターの位置・極性から、各モーターの正転／逆転と速度を算出し、制御コードを生成します。</p>
+
+      <div class="tabs" id="motor-tabs">
+        <button class="tab active" data-type="mecanum">メカナム4</button>
+        <button class="tab" data-type="omni">オムニ4</button>
+        <button class="tab" data-type="diff">差動2</button>
+      </div>
+
+      <div class="grid">
+        <label>vx 前進 [m/s]<input id="mot-vx" type="number" inputmode="decimal" step="any" value="1" /></label>
+        <label>vy 横 (左 +) [m/s]<input id="mot-vy" type="number" inputmode="decimal" step="any" value="0" /></label>
+        <label>ω 旋回 [rad/s]<input id="mot-w" type="number" inputmode="decimal" step="any" value="0" /></label>
+        <label>車輪半径 r [m]<input id="mot-r" type="number" inputmode="decimal" step="any" value="0.05" /></label>
+        <label>前後半長 Lx [m]<input id="mot-lx" type="number" inputmode="decimal" step="any" value="0.10" /></label>
+        <label>左右半幅 Ly [m]<input id="mot-ly" type="number" inputmode="decimal" step="any" value="0.15" /></label>
+        <label>最大車輪速度 (100% PWM) [m/s]<input id="mot-vmax" type="number" inputmode="decimal" step="any" value="1.5" /></label>
+      </div>
+
+      <div class="subcard">
+        <h3>モーター設定（位置・極性）</h3>
+        <div id="motor-config"></div>
+      </div>
+
+      <div class="results" id="motor-results"></div>
+
+      <div class="subcard">
+        <h3>コード生成</h3>
+        <div class="btn-row">
+          <button class="btn-ghost" id="btn-gen-arduino">Arduino / ESP32 (PWM)</button>
+          <button class="btn-ghost" id="btn-gen-ros">ROS2 C++ (/cmd_vel)</button>
+        </div>
+        <pre id="code-output" class="code-output"></pre>
+        <button class="btn" id="btn-copy">📋 コピー</button>
+      </div>
+      <p class="error hidden" id="motor-error"></p>
+    </section>
+
+
+    <!-- 2. クォータニオン ⇄ オイラー ⇄ 回転行列 -->
+    <section class="card" id="card-quat">
+      <h2>クォータニオン ⇄ オイラー角 ⇄ 回転行列</h2>
+      <p class="desc">クォータニオン (x,y,z,w) とロール・ピッチ・ヨー [deg]、3×3 回転行列を双方向に変換します。</p>
+
+      <div class="subcard">
+        <h3>クォータニオン</h3>
+        <div class="grid grid-4">
+          <label>x<input id="q-x" type="number" inputmode="decimal" step="any" value="0" /></label>
+          <label>y<input id="q-y" type="number" inputmode="decimal" step="any" value="0" /></label>
+          <label>z<input id="q-z" type="number" inputmode="decimal" step="any" value="0" /></label>
+          <label>w<input id="q-w" type="number" inputmode="decimal" step="any" value="1" /></label>
+        </div>
+        <button class="btn" id="btn-q2e">クォータニオン → オイラー・行列</button>
+        <button class="btn btn-ghost" id="btn-q-norm">正規化して適用</button>
+      </div>
+
+      <div class="subcard">
+        <h3>オイラー角 (roll / pitch / yaw)</h3>
+        <div class="grid grid-3">
+          <label>roll [°]<input id="e-roll" type="number" inputmode="decimal" step="any" value="0" /></label>
+          <label>pitch [°]<input id="e-pitch" type="number" inputmode="decimal" step="any" value="0" /></label>
+          <label>yaw [°]<input id="e-yaw" type="number" inputmode="decimal" step="any" value="0" /></label>
+        </div>
+        <button class="btn" id="btn-e2q">オイラー → クォータニオン・行列</button>
+        <p class="note">回転順: R = Rz(yaw) · Ry(pitch) · Rx(roll)（ZYX 内因性）。</p>
+      </div>
+
+      <div class="subcard">
+        <h3>3×3 回転行列</h3>
+        <div class="matrix-inputs" id="matrix-inputs"></div>
+        <button class="btn" id="btn-m2qe">行列 → クォータニオン・オイラー</button>
+      </div>
+
+      <div class="results matrix-outputs" id="quat-results"></div>
+      <p class="error hidden" id="quat-error"></p>
+    </section>
+
+    <!-- 3. 車輪速度・ギア比 -->
+    <section class="card" id="card-wheel">
+      <h2>車輪速度・ギア比変換器</h2>
+      <p class="desc">モーター回転数・車輪径・ギア比から車輪回転数と直進速度を求めます（逆算も可）。</p>
+      <div class="grid">
+        <label>モーター回転数 [RPM]<input id="wh-motor" type="number" inputmode="decimal" step="any" value="1000" /></label>
+        <label>車輪直径 D [m]<input id="wh-d" type="number" inputmode="decimal" step="any" value="0.10" /></label>
+        <label>ギア比 (モーター : 車輪)<input id="wh-ratio" type="number" inputmode="decimal" step="any" value="10" /></label>
+      </div>
+      <div class="results" id="wheel-results"></div>
+      <div class="subcard">
+        <h3>逆算（目標速度から）</h3>
+        <div class="grid">
+          <label>目標速度 [m/s]<input id="wh-speed" type="number" inputmode="decimal" step="any" value="1.0" /></label>
+        </div>
+        <div class="results" id="wheel-rev-results"></div>
+      </div>
+      <p class="error hidden" id="wheel-error"></p>
+    </section>
+
+    <!-- 4. CAN フレーム変換 -->
+    <section class="card" id="card-can">
+      <h2>CAN フレーム変換</h2>
+      <p class="desc">CAN ID の HEX/DEC 変換と、データバイトのスケール・オフセットによる物理値変換。</p>
+
+      <div class="subcard">
+        <h3>CAN ID 変換</h3>
+        <div class="grid">
+          <label>ID (HEX)<input id="can-id-hex" type="text" inputmode="text" placeholder="例: 0x123" value="0x123" /></label>
+          <label>ID (DEC)<input id="can-id-dec" type="text" inputmode="numeric" placeholder="例: 291" value="291" /></label>
+        </div>
+        <div class="results" id="can-id-results"></div>
+      </div>
+
+      <div class="subcard">
+        <h3>データ値 変換（raw → 物理値）</h3>
+        <div class="grid">
+          <label>データバイト (HEX)<input id="can-data" type="text" inputmode="text" placeholder="例: 01 02 03 04" value="01 02" /></label>
+          <label>バイトオーダー
+            <select id="can-order">
+              <option value="le" selected>リトルエンディアン</option>
+              <option value="be">ビッグエンディアン</option>
+            </select>
+          </label>
+          <label>ビット幅
+            <select id="can-bits">
+              <option value="16" selected>16 ビット</option>
+              <option value="32">32 ビット</option>
+            </select>
+          </label>
+          <label>符号
+            <select id="can-signed">
+              <option value="unsigned" selected>符号なし</option>
+              <option value="signed">符号あり</option>
+            </select>
+          </label>
+          <label>スケール (scale)<input id="can-scale" type="number" inputmode="decimal" step="any" value="1" /></label>
+          <label>オフセット (offset)<input id="can-offset" type="number" inputmode="decimal" step="any" value="0" /></label>
+        </div>
+        <div class="results" id="can-data-results"></div>
+      </div>
+      <p class="error hidden" id="can-error"></p>
+    </section>
+
+    <!-- 5. バッテリー稼働時間 -->
+    <section class="card" id="card-batt">
+      <h2>バッテリー稼働時間推定</h2>
+      <p class="desc">容量と平均消費電流から、およその稼働時間を推定します。</p>
+      <div class="grid">
+        <label>容量 [Ah]<input id="batt-ah" type="number" inputmode="decimal" step="any" value="5.0" /></label>
+        <label>平均消費電流 [A]<input id="batt-a" type="number" inputmode="decimal" step="any" value="1.0" /></label>
+      </div>
+      <div class="results" id="batt-results"></div>
+
+      <div class="subcard">
+        <h3>mAh 簡易消費計算</h3>
+        <div class="grid">
+          <label>容量 [mAh]<input id="batt-mah" type="number" inputmode="decimal" step="any" value="5000" /></label>
+          <label>消費電流 [mA]<input id="batt-ma" type="number" inputmode="decimal" step="any" value="500" /></label>
+        </div>
+        <div class="results" id="batt-mah-results"></div>
+      </div>
+      <p class="error hidden" id="batt-error"></p>
+    </section>
+
+  </main>
+
+  <footer class="app-footer">
+    <p>RoboFieldKit · 完全クライアントサイド · オフライン動作</p>
+    <p id="sw-status" class="sw-status">サービスワーカー: 確認中…</p>
+  </footer>
+
+  <script src="js/kinematics.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
