@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>回転方向の定義と符号 — RoboFieldKit</title>
+<style>
+  :root { --ink:#111; --sub:#555; --mut:#8a8f98; --line:#e2e2e2; --bg:#fff; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Noto Sans JP","BIZ UDGothic",-apple-system,"Segoe UI",sans-serif; line-height:1.75; }
+  .wrap { max-width:900px; margin:0 auto; padding:28px 22px 64px; }
+  .kicker { font-size:12px; letter-spacing:.22em; color:var(--ink); }
+  .kicker .right { float:right; color:var(--mut); letter-spacing:.18em; }
+  hr.top { border:0; border-top:1px solid var(--ink); margin:12px 0 26px; }
+  h1 { font-size:26px; margin:0 0 6px; letter-spacing:.02em; }
+  .lead { color:var(--sub); font-size:14px; margin:0 0 26px; }
+  h2 { font-size:18px; margin:38px 0 10px; padding-bottom:6px; border-bottom:1px solid var(--line); }
+  p { font-size:14.5px; margin:10px 0; }
+  ul { font-size:14.5px; padding-left:1.2em; }
+  li { margin:4px 0; }
+  figure { margin:18px 0; border:1px solid var(--ink); padding:8px; }
+  figure img { width:100%; display:block; }
+  figcaption { font-size:12px; color:var(--mut); padding:6px 2px 0; }
+  table { border-collapse:collapse; width:100%; font-size:14px; margin:14px 0; }
+  th { background:var(--ink); color:#fff; font-weight:700; }
+  th,td { border:1px solid #ddd; padding:8px 10px; text-align:center; }
+  td.pos { color:#111; font-weight:700; }
+  td.neg { color:#c0c0c0; }
+  td.lbl { text-align:left; font-weight:400; color:#222; }
+  code { background:#f5f5f5; border:1px solid var(--line); border-radius:4px; padding:1px 5px; font-size:13px; }
+  .note { background:#fafafa; border:1px solid var(--ink); padding:12px 16px; font-size:14px; margin:16px 0; }
+  .note b { display:block; margin-bottom:6px; }
+  .warn { border-left:3px solid var(--ink); background:#fafafa; padding:10px 16px; font-size:13.5px; }
+  footer { margin-top:40px; padding-top:12px; border-top:1px solid var(--line); font-size:12px; color:var(--mut); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="kicker">ROBOFIELDKIT<span class="right">ROTATION</span></div>
+  <hr class="top">
+
+  <h1>回転方向の定義と符号</h1>
+  <p class="lead">視点＝ロボット中心（上面図）／時計回り（CW）＝正転、反時計回り（CCW）＝逆転</p>
+
+  <figure>
+    <img src="./rotation_definition.png" alt="正転の定義（中心から見て時計回り）">
+    <figcaption>図1. 正転＝中心から見て時計回り（CW）。正転時は全輪が同符号。</figcaption>
+  </figure>
+
+  <h2>なぜ「視点」が必要か</h2>
+  <p>回転方向は絶対値ではない。同じ回転でも、<strong>どの面から見るか</strong>で「左回り／右回り」が入れ替わる。</p>
+  <ul>
+    <li>出力軸側（前面・負荷側）から見た向きと、端子側（背面）から見た向きは逆</li>
+    <li>真上から見た向きと、真下から見た向きも逆</li>
+  </ul>
+  <p>そのため「どこから見て」を先に固定する。本プロジェクトは <strong>視点＝ロボット中心（上面図）</strong>。</p>
+
+  <h2>ROS／座標系との符号の違い</h2>
+  <p>ROS は右手系（z 上向き）で、<strong>上から見て反時計回りが ＋</strong>。</p>
+  <div class="warn">
+    正転（CW）＝ −ω　／　逆転（CCW）＝ ＋ω　→　<code>ω_code = −ω_正転</code><br>
+    <code>cmd_vel.angular.z</code> や逆運動学へ渡すときは<strong>符号反転が必要</strong>。
+  </div>
+
+  <h2>4輪 正転／逆転 指令符号 対応表</h2>
+  <figure>
+    <img src="./rotation_table.png" alt="4輪 正転／逆転 指令符号 対応表">
+    <figcaption>図2. 各輪の「正転方向」を ＋ としたときの指令符号。</figcaption>
+  </figure>
+
+  <table>
+    <tr><th>輪</th><th>位置</th><th>正転(CW)</th><th>逆転(CCW)</th><th>前進(+x)</th><th>後退(−x)</th><th>左(+y)</th><th>右(−y)</th></tr>
+    <tr><td>1</td><td class="lbl">前左（左上）</td><td class="pos">+</td><td class="neg">−</td><td class="pos">+</td><td class="neg">−</td><td class="neg">−</td><td class="pos">+</td></tr>
+    <tr><td>2</td><td class="lbl">前右（右上）</td><td class="pos">+</td><td class="neg">−</td><td class="neg">−</td><td class="pos">+</td><td class="neg">−</td><td class="pos">+</td></tr>
+    <tr><td>3</td><td class="lbl">後右（右下）</td><td class="pos">+</td><td class="neg">−</td><td class="neg">−</td><td class="pos">+</td><td class="pos">+</td><td class="neg">−</td></tr>
+    <tr><td>4</td><td class="lbl">後左（左下）</td><td class="pos">+</td><td class="neg">−</td><td class="pos">+</td><td class="neg">−</td><td class="pos">+</td><td class="neg">−</td></tr>
+  </table>
+
+  <div class="note">
+    <b>読み方</b>
+    ・旋回：全輪が同符号（正転なら全 ＋）<br>
+    ・前進：左側（1・4）と右側（2・3）が逆符号<br>
+    ・左移動：前側（1・2）と後側（3・4）が逆符号
+  </div>
+
+  <h2>検証（<code>kinematics.js</code> の <code>omniWheels</code>）</h2>
+  <p><code>Lx=0.10, Ly=0.15</code>（テスト既定値）で実行。結果は <strong>全項目 PASS</strong>。</p>
+  <ul>
+    <li>純旋回：4輪すべて同符号／CW は CCW の単純な符号反転</li>
+    <li>前進・左移動の符号関係：上表どおり</li>
+    <li>旋回項：全輪が <code>L = √(Lx²+Ly²) = 0.180</code> で一致</li>
+    <li>最小二乗の往復（<code>BᵀB u = Bᵀw</code>）：誤差 <code>1.1e-16</code>（モデルは可逆）</li>
+  </ul>
+  <div class="warn">
+    <strong>観察：</strong><code>omniWheels</code> の並進ゲインは vx が <code>Ly/L</code>、vy が <code>Lx/L</code>。
+    <code>Lx ≠ Ly</code> のとき前進と横移動でゲインが変わる。45°固定マウントのオムニなら本来どちらも
+    <code>1/√2 ≒ 0.707</code> になるはずなので、<strong>ローラー角度（実機のマウント角）と要突き合わせ</strong>。
+  </div>
+
+  <h2>検証済みの式（正転＝CW を ＋ に書き直した形）</h2>
+  <p><code>c = Lx / L</code>、<code>s = Ly / L</code>、<code>L = √(Lx² + Ly²)</code>、ω は正転（CW）を ＋</p>
+  <ul>
+    <li>輪1（前左）＝ <code>vy·c − vx·s − ω·L</code></li>
+    <li>輪2（前右）＝ <code>vx·s + vy·c − ω·L</code></li>
+    <li>輪4（後左）＝ <code>−(vx·s + vy·c) − ω·L</code></li>
+    <li>輪3（後右）＝ <code>vx·s − vy·c − ω·L</code></li>
+  </ul>
+
+  <footer>RoboFieldKit — docs/rotation-convention.html</footer>
+</div>
+</body>
+</html>
