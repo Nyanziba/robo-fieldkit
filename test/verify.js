@@ -152,10 +152,12 @@ class FakeElement {
       remove(c) { this._s.delete(c); },
       contains(c) { return this._s.has(c); }
     };
+    this._l = {};
   }
   get value() { return this._value; }
   set value(v) { this._value = v; }
-  addEventListener() {}
+  addEventListener(type, fn) { (this._l[type] = this._l[type] || []).push(fn); }
+  click() { (this._l.click || []).forEach((f) => f({ preventDefault() {} })); }
   querySelector() { return null; }
   querySelectorAll() { return []; }
   select() {}
@@ -252,6 +254,21 @@ console.log("  ✓ CAN ID 変換描画: 0x123 = 291 正しい");
 const battHtml = html("batt-results");
 assert.ok(battHtml.includes("5.00"), "battery 5h rendered");
 console.log("  ✓ バッテリー描画: 5 Ah / 1 A = 5 時間 正しい");
+
+// ---- code generation (core new feature) ----
+doc.getElementById("btn-gen-arduino").click();
+const ard = doc.getElementById("code-output").textContent;
+assert.ok(ard.includes("MOTOR_WHEEL") && ard.includes("POLARITY") && ard.includes("void drive("), "arduino code generated");
+assert.ok(ard.includes("{ 1, -1, 1, 1 }"), "arduino POLARITY reflects inverted M2");
+assert.ok(ard.includes("メカナム"), "arduino code labels robot type");
+assert.ok(ard.includes("vw[0] = vx - vy - w*"), "arduino mecanum formula present");
+console.log("  ✓ Arduino/ESP32 コード生成: PWM・MOTOR_WHEEL・POLARITY{1,-1,1,1}・逆運動学式を含む");
+
+doc.getElementById("btn-gen-ros").click();
+const ros = doc.getElementById("code-output").textContent;
+assert.ok(ros.includes("rclcpp") && ros.includes("cmd_vel") && ros.includes("geometry_msgs"), "ros code generated");
+assert.ok(ros.includes("POLARITY_") && ros.includes("on_cmd"), "ros polarity + callback present");
+console.log("  ✓ ROS2 C++ コード生成: rclcpp / cmd_vel / geometry_msgs / 極性配列を含む");
 
 console.log("\n  DOM スモークテスト: パス（JSエラーなし・各計算器が正しい値を描画）");
 
